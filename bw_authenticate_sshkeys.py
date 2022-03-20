@@ -92,7 +92,7 @@ def folder_items(session, folder_id):
     """
     Function to return items from a folder
     """
-    logging.debug('Folder ID: %s', folder_id)
+    logging.debug('Folder ID: %s' % folder_id)
 
     proc_items = subprocess.run(
         ['bw', 'list', 'items', '--folderid', folder_id, '--session', session],
@@ -105,21 +105,20 @@ def folder_items(session, folder_id):
 
 def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
     """
-    Function to attempt to get keys from a vault item
+    Add all possible keys with corresponding passphrases to ssh-add
     """
     for item in items:
-        print(item)
         passphrase = item["login"]["password"]
         try:
             path = itemid_path_pair[item["id"]]
         except KeyError:
-            print("Path for item %s not found", item["name"])
+            print("Path for item %s not found" % item["name"])
             continue
         if passphrase is None:
-            print("Passphrase not found for %s", item["name"])
+            print("Passphrase not found for %s" % item["name"])
             continue
         if not path.exists():
-            print("Private key at %s does not exist", path)
+            print("Private key at %s does not exist" % path)
             continue
         try:
             # sleep .3; echo testing; } | script -q /dev/null ssh-add testing_key
@@ -131,6 +130,19 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
             )
         except subprocess.SubprocessError:
             logging.warning('Could not add key to the SSH agent')
+
+
+def lock_bitwarden(session):
+    """
+    Lock Bitwarden after all is done
+    """
+    subprocess.run(
+        ['bw', 'lock', '--session', session],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+        check=True,
+    )
+    return None
 
 
 if __name__ == '__main__':
@@ -160,16 +172,21 @@ if __name__ == '__main__':
             loglevel = logging.INFO
 
         logging.basicConfig(level=loglevel)
+
+        itemid_path_pair = {}
         try:
-            itemid_path_pair = {}
             with open(config.ITEM_ID_KEY_MAPPING_CSV) as csv_file:
                 reader = csv.reader(csv_file)
                 for row in reader:
                     itemid_path_pair[row[0]] = pathlib.Path(row[1]).expanduser()
-            print(itemid_path_pair)
+        except Exception:
+            print("CSV file was not loaded correctly")
+            exit()
+
+        try:
             logging.info('Getting Bitwarden session')
             session = get_session()
-            logging.debug('Session = %s', session)
+            logging.debug('Session = %s' % session)
 
             logging.info('Getting folder items')
             items = folder_items(session, config.FOLDER_ID)
@@ -179,9 +196,9 @@ if __name__ == '__main__':
 
         except subprocess.CalledProcessError as e:
             if e.stderr:
-                logging.error('`%s` error: %s', e.cmd[0], e.stderr)
-            logging.debug('Error running %s', e.cmd)
-#        finally:
-#            log_bitwarden_off()
+                logging.error('`%s` error: %s' % (e.cmd[0], e.stderr))
+            logging.debug('Error running %s' % e.cmd)
+        finally:
+            lock_bitwarden(session)
 
     main()
