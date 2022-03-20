@@ -1,0 +1,5 @@
+# TODO: Fill id of folder where you store passphrases
+FOLDER_ID = ""
+
+# TODO: Fill path to csv file containing itemid <-> path mapping
+ITEM_ID_KEY_MAPPING_CSV = "example.csv"
