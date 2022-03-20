@@ -108,8 +108,13 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
     Function to attempt to get keys from a vault item
     """
     for item in items:
-        passphrase = item["password"]
-        path = itemid_path_pair[item["id"]]
+        print(item)
+        passphrase = item["login"]["password"]
+        try:
+            path = itemid_path_pair[item["id"]]
+        except KeyError:
+            print("Path for item %s not found", item["name"])
+            continue
         if passphrase is None:
             print("Passphrase not found for %s", item["name"])
             continue
@@ -117,12 +122,11 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
             print("Private key at %s does not exist", path)
             continue
         try:
+            # sleep .3; echo testing; } | script -q /dev/null ssh-add testing_key
             subprocess.run(
-                ['ssh-add', path],
-                input=passphrase,
-                # Works even if ssh-askpass is not installed
-                env=dict(os.environ, SSH_ASKPASS_REQUIRE="never"),
+                ['{ sleep .3; echo %s; } | script -q /dev/null ssh-add %s' % (passphrase, path)],
                 universal_newlines=True,
+                shell=True,
                 check=True,
             )
         except subprocess.SubprocessError:
@@ -161,21 +165,23 @@ if __name__ == '__main__':
             with open(config.ITEM_ID_KEY_MAPPING_CSV) as csv_file:
                 reader = csv.reader(csv_file)
                 for row in reader:
-                    itemid_path_pair[row[0]] = pathlib.Path(row[1])
-#
-#            logging.info('Getting Bitwarden session')
-#            session = get_session()
-#            logging.debug('Session = %s', session)
-#
-#            logging.info('Getting folder items')
-#            items = folder_items(session, config.FOLDER_ID)
-#
-#            logging.info('Attempting to add keys to ssh-agent')
-#            add_ssh_keys(session, items, itemid_path_pair)
-#
+                    itemid_path_pair[row[0]] = pathlib.Path(row[1]).expanduser()
+            print(itemid_path_pair)
+            logging.info('Getting Bitwarden session')
+            session = get_session()
+            logging.debug('Session = %s', session)
+
+            logging.info('Getting folder items')
+            items = folder_items(session, config.FOLDER_ID)
+
+            logging.info('Attempting to add keys to ssh-agent')
+            add_ssh_keys(session, items, itemid_path_pair)
+
         except subprocess.CalledProcessError as e:
             if e.stderr:
                 logging.error('`%s` error: %s', e.cmd[0], e.stderr)
             logging.debug('Error running %s', e.cmd)
+#        finally:
+#            log_bitwarden_off()
 
     main()
