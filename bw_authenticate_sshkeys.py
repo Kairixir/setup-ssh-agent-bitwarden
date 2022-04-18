@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+
 """
-Extracts SSH keys from Bitwarden vault
+Extracts passphrases for SSH private keys from Bitwarden vault
+Then adds them to ssh-agent
 """
 
 from typing import Dict
@@ -183,6 +185,8 @@ if __name__ == '__main__':
             print("CSV file was not loaded correctly")
             exit()
 
+        session = None
+
         try:
             logging.info('Getting Bitwarden session')
             session = get_session()
@@ -199,6 +203,7 @@ if __name__ == '__main__':
                 logging.error('`%s` error: %s' % (e.cmd[0], e.stderr))
             logging.debug('Error running %s' % e.cmd)
         finally:
-            lock_bitwarden(session)
+            if session:
+                lock_bitwarden(session)
 
     main()
