@@ -40,7 +40,7 @@ def bwcli_version():
     Function to return the version of the Bitwarden CLI
     """
     proc_version = subprocess.run(
-        ['bw', '--version'],
+        ["bw", "--version"],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -56,7 +56,7 @@ def cli_supports(feature):
     """
     version = parse_version(bwcli_version())
 
-    if feature == 'nointeraction' and version >= parse_version('1.9.0'):
+    if feature == "nointeraction" and version >= parse_version("1.9.0"):
         return True
     return False
 
@@ -66,23 +66,23 @@ def get_session():
     Function to return a valid Bitwarden session
     """
     # Check for an existing, user-supplied Bitwarden session
-    session = os.environ.get('BW_SESSION')
+    session = os.environ.get("BW_SESSION")
     if session is not None:
-        logging.debug('Existing Bitwarden session found')
+        logging.debug("Existing Bitwarden session found")
         return session
 
     # Check if we're already logged in
-    proc_logged = subprocess.run(['bw', 'login', '--check', '--quiet'])
+    proc_logged = subprocess.run(["bw", "login", "--check", "--quiet"])
 
     if proc_logged.returncode:
-        logging.debug('Not logged into Bitwarden')
-        operation = 'login'
+        logging.debug("Not logged into Bitwarden")
+        operation = "login"
     else:
-        logging.debug('Bitwarden vault is locked')
-        operation = 'unlock'
+        logging.debug("Bitwarden vault is locked")
+        operation = "unlock"
 
     proc_session = subprocess.run(
-        ['bw', '--raw', operation],
+        ["bw", "--raw", operation],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -94,10 +94,10 @@ def folder_items(session, folder_id):
     """
     Function to return items from a folder
     """
-    logging.debug('Folder ID: %s' % folder_id)
+    logging.debug("Folder ID: %s" % folder_id)
 
     proc_items = subprocess.run(
-        ['bw', 'list', 'items', '--folderid', folder_id, '--session', session],
+        ["bw", "list", "items", "--folderid", folder_id, "--session", session],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -125,13 +125,13 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
         try:
             # sleep .3; echo testing; } | script -q /dev/null ssh-add testing_key
             subprocess.run(
-                ['{ sleep .3; echo %s; } | script -q /dev/null ssh-add %s' % (passphrase, path)],
+                ["{ sleep .3; echo %s; } | script -q /dev/null ssh-add %s" % (passphrase, path)],
                 universal_newlines=True,
                 shell=True,
                 check=True,
             )
         except subprocess.SubprocessError:
-            logging.warning('Could not add key to the SSH agent')
+            logging.warning("Could not add key to the SSH agent")
 
 
 def lock_bitwarden(session):
@@ -139,7 +139,7 @@ def lock_bitwarden(session):
     Lock Bitwarden after all is done
     """
     subprocess.run(
-        ['bw', 'lock', '--session', session],
+        ["bw", "lock", "--session", session],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -147,16 +147,18 @@ def lock_bitwarden(session):
     return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def parse_args():
         """
         Function to parse command line arguments
         """
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '-d', '--debug',
-            action='store_true',
-            help='show debug output',
+            "-d",
+            "--debug",
+            action="store_true",
+            help="show debug output",
         )
 
         return parser.parse_args()
@@ -188,23 +190,25 @@ if __name__ == '__main__':
         session = None
 
         try:
-            logging.info('Getting Bitwarden session')
+            logging.info("Getting Bitwarden session")
             session = get_session()
-            logging.debug('Session = %s' % session)
+            logging.debug("Session = %s" % session)
 
             # Sync bw vault before retrieving keys
-            subprocess.run(["bw", "sync", "--session", session], stdout=subprocess.PIPE, universal_newlines=True, check=True)
+            subprocess.run(
+                ["bw", "sync", "--session", session], stdout=subprocess.PIPE, universal_newlines=True, check=True
+            )
 
-            logging.info('Getting folder items')
+            logging.info("Getting folder items")
             items = folder_items(session, config.FOLDER_ID)
 
-            logging.info('Attempting to add keys to ssh-agent')
+            logging.info("Attempting to add keys to ssh-agent")
             add_ssh_keys(session, items, itemid_path_pair)
 
         except subprocess.CalledProcessError as e:
             if e.stderr:
-                logging.error('`%s` error: %s' % (e.cmd[0], e.stderr))
-            logging.debug('Error running %s' % e.cmd)
+                logging.error("`%s` error: %s" % (e.cmd[0], e.stderr))
+            logging.debug("Error running %s" % e.cmd)
         finally:
             if session:
                 lock_bitwarden(session)
