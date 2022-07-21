@@ -192,6 +192,9 @@ if __name__ == '__main__':
             session = get_session()
             logging.debug('Session = %s' % session)
 
+            # Sync bw vault before retrieving keys
+            subprocess.run(["bw", "sync", "--session", session], stdout=subprocess.PIPE, universal_newlines=True, check=True)
+
             logging.info('Getting folder items')
             items = folder_items(session, config.FOLDER_ID)
 
