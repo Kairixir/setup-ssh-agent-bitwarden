@@ -72,7 +72,7 @@ def get_session():
         return session
 
     # Check if we're already logged in
-    proc_logged = subprocess.run(["bw", "login", "--check", "--quiet"])
+    proc_logged = subprocess.run(["bw", "login", "--check", "--quiet", config.EMAIL])
 
     if proc_logged.returncode:
         logging.debug("Not logged into Bitwarden")

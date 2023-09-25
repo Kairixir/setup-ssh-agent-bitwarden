@@ -8,3 +8,6 @@ FOLDER_ID = ""
 # TODO: Fill path to csv file containing itemid <-> path mapping
 # Note: Use this statement, if your csv file is in the same folder as the config file
 ITEM_ID_KEY_MAPPING_CSV = Path(os.path.realpath(os.path.dirname(__file__)), "mapping.csv.example")
+
+# TODO: Fill email
+EMAIL = "name@domain.com"
