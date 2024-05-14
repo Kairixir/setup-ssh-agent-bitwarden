@@ -15,7 +15,7 @@ import logging
 import os
 import subprocess
 
-from pkg_resources import parse_version
+from importlib.metadata import version
 
 
 def memoize(func):
@@ -54,9 +54,9 @@ def cli_supports(feature):
     Function to return whether the current Bitwarden CLI supports a particular
     feature
     """
-    version = parse_version(bwcli_version())
+    version = version(bwcli_version())
 
-    if feature == "nointeraction" and version >= parse_version("1.9.0"):
+    if feature == "nointeraction" and version >= version("1.9.0"):
         return True
     return False
 
@@ -125,7 +125,7 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
         try:
             # sleep .3; echo testing; } | script -q /dev/null ssh-add testing_key
             subprocess.run(
-                ["{ sleep .3; echo %s; } | script -q /dev/null ssh-add %s" % (passphrase, path)],
+                ["{ sleep .8; echo %s; } | script -q /dev/null ssh-add %s" % (passphrase, path)],
                 universal_newlines=True,
                 shell=True,
                 check=True,
