@@ -104,7 +104,7 @@ def folder_items(session, folder_id):
     logging.debug("Folder ID: %s" % folder_id)
 
     proc_items = subprocess.run(
-        f"{BW_SHELL_CALL} list items --folderid {folder_id} --session {session}",
+        f"BW_SESSION={session} {BW_SHELL_CALL} list items --folderid {folder_id}",
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -147,7 +147,7 @@ def lock_bitwarden(session):
     Lock Bitwarden after all is done
     """
     subprocess.run(
-        f"{BW_SHELL_CALL} lock --session {session}",
+        f"BW_SESSION={session} {BW_SHELL_CALL} lock",
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
             # Sync bw vault before retrieving keys
             subprocess.run(
-                f"{BW_SHELL_CALL} sync --session {session}", stdout=subprocess.PIPE, universal_newlines=True, check=True, shell=True
+                f"BW_SESSION={session} {BW_SHELL_CALL} sync", stdout=subprocess.PIPE, universal_newlines=True, check=True, shell=True
             )
 
             logging.info("Getting folder items")
