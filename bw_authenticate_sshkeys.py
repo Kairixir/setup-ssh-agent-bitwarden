@@ -17,6 +17,11 @@ import subprocess
 
 from importlib.metadata import version
 
+# Use this constant to call `bw` in shell
+# Necessary to fix `bw` deprecation warning for punycode 
+# https://github.com/bitwarden/clients/issues/6689
+BW_SHELL_CALL = "NODE_OPTIONS=\"--no-deprecation\" bw"
+
 
 def memoize(func):
     """
@@ -40,10 +45,11 @@ def bwcli_version():
     Function to return the version of the Bitwarden CLI
     """
     proc_version = subprocess.run(
-        ["bw", "--version"],
+        [f"{BW_SHELL_CALL} --version"],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
+        shell=True
     )
     return proc_version.stdout
 
@@ -72,7 +78,7 @@ def get_session():
         return session
 
     # Check if we're already logged in
-    proc_logged = subprocess.run(["bw", "login", "--check", "--quiet", config.EMAIL])
+    proc_logged = subprocess.run(f"{BW_SHELL_CALL} login --check --quiet {config.EMAIL}", shell=True)
 
     if proc_logged.returncode:
         logging.debug("Not logged into Bitwarden")
@@ -80,12 +86,13 @@ def get_session():
     else:
         logging.debug("Bitwarden vault is locked")
         operation = "unlock"
-
+    
     proc_session = subprocess.run(
-        ["bw", "--raw", operation],
+        f"{BW_SHELL_CALL} --raw {operation}",
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
+        shell=True
     )
     return proc_session.stdout
 
@@ -97,10 +104,11 @@ def folder_items(session, folder_id):
     logging.debug("Folder ID: %s" % folder_id)
 
     proc_items = subprocess.run(
-        ["bw", "list", "items", "--folderid", folder_id, "--session", session],
+        f"{BW_SHELL_CALL} list items --folderid {folder_id} --session {session}",
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
+        shell=True
     )
     return json.loads(proc_items.stdout)
 
@@ -139,10 +147,11 @@ def lock_bitwarden(session):
     Lock Bitwarden after all is done
     """
     subprocess.run(
-        ["bw", "lock", "--session", session],
+        f"{BW_SHELL_CALL} lock --session {session}",
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
+        shell=True
     )
     return None
 
@@ -196,7 +205,7 @@ if __name__ == "__main__":
 
             # Sync bw vault before retrieving keys
             subprocess.run(
-                ["bw", "sync", "--session", session], stdout=subprocess.PIPE, universal_newlines=True, check=True
+                f"{BW_SHELL_CALL} sync --session {session}", stdout=subprocess.PIPE, universal_newlines=True, check=True, shell=True
             )
 
             logging.info("Getting folder items")
