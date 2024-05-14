@@ -133,7 +133,7 @@ def add_ssh_keys(session, items, itemid_path_pair: Dict[str, pathlib.Path]):
         try:
             # sleep .3; echo testing; } | script -q /dev/null ssh-add testing_key
             subprocess.run(
-                ["{ sleep .8; echo %s; } | script -q /dev/null ssh-add %s" % (passphrase, path)],
+                ["{ sleep .3; echo %s; } | script -q /dev/null ssh-add %s" % (passphrase, path)],
                 universal_newlines=True,
                 shell=True,
                 check=True,
