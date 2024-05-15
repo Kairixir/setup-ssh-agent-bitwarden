@@ -1,4 +1,5 @@
 # bwsshauth 
+Keep passphrases for your locally present private keys in Bitwarden and add them to `ssh-agent` with one command
 
 ## Motivation
 Securing ssh keys with password manager ([Bitwarden](https://bitwarden.com/))
